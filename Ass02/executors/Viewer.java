@@ -25,6 +25,8 @@ public class Viewer extends JFrame {
 	private Container mainContainer;
 	private JPanel componentPane;
 	private JPanel buttonPane;
+	private JLabel labelUrl;
+	private JLabel labelDepth;
 	private JTextField urlText;
 	private JTextField depthText;
 	private JButton run;
@@ -41,16 +43,16 @@ public class Viewer extends JFrame {
 		setSize(w, h);
 		setResizable(false);
 		JFrame myFrame = new JFrame();
-		myFrame.setSize(new Dimension(w, h + 75));
+		myFrame.setSize(new Dimension(w, h + 100));
 		myFrame.setLayout(new BorderLayout());
 
 		panel = new VisualiserPanel(w, h);
 		mainContainer = getContentPane();
 		componentPane = new JPanel();
 		buttonPane = new JPanel();
-		urlText = new JTextField("c");
+		urlText = new JTextField();
 		urlText.setMaximumSize(new Dimension(150,30));
-		depthText = new JTextField("b");
+		depthText = new JTextField("1");
 		depthText.setMaximumSize(new Dimension(150,30));
 		run = new JButton("Run");
 		
@@ -63,7 +65,7 @@ public class Viewer extends JFrame {
 				} else {
 					try {
 						if(isURL(urlText.getText())) {
-							httpConnection = new HttpConnection(new URL(urlText.getText()), "CIAO.html");
+							httpConnection = new HttpConnection(new URL(urlText.getText()));
 							httpConnection.connect();
 						} else {
 							JOptionPane.showMessageDialog(myFrame, "Error 404, insert a valid URL");
@@ -76,11 +78,16 @@ public class Viewer extends JFrame {
 			}
 		});
 		
+		labelUrl = new JLabel("Insert a URL");
+		labelDepth = new JLabel("Insert a Depth");
+		
 		mainContainer.setLayout(new BoxLayout(mainContainer, BoxLayout.Y_AXIS));
 		componentPane.setLayout(new BoxLayout(componentPane, BoxLayout.X_AXIS));
 		buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.Y_AXIS));
 		buttonPane.setSize(componentPane.getSize());
+		componentPane.add(labelUrl);
 		componentPane.add(urlText);
+		componentPane.add(labelDepth);
 		componentPane.add(depthText);
 		componentPane.add(run);
 		componentPane.add(Box.createRigidArea(new Dimension(200, 0)));
@@ -112,7 +119,7 @@ public class Viewer extends JFrame {
 	
 	private boolean isURL(String url) {
 	  try {
-	     (new java.net.URL(url)).openStream().close();
+	     (new URL(url)).openStream().close();
 	     return true;
 	  } catch (Exception ex) { }
 	  return false;
