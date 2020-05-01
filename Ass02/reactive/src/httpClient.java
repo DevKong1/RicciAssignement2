@@ -3,6 +3,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -12,6 +14,7 @@ public class httpClient {
 	
 	private URL url;
 	private boolean isConnected;
+	private List<String> result = new ArrayList<String>();
 
 	public httpClient(final URL url) {
 		this.url = url;
@@ -35,11 +38,18 @@ public class httpClient {
 			    }
 			    reader.close();
 			    JSONObject jsonObject = new JSONObject(response.toString());
-			    JSONArray links = jsonObject.getJSONObject("parse").getJSONArray("links");
-			    for(int i = 0; i < links.length(); i++) {
-			    	if(links.getJSONObject(i).getInt("ns") == 0) {
-			    		System.out.println("" + links.getJSONObject(i).getString("*"));
-			    	}
+			    JSONArray links;
+			    try {
+			    	links = jsonObject.getJSONObject("parse").getJSONArray("links");
+			    } catch (Exception ex){
+			    	links = null;
+			    }
+			    if(links != null) {
+				    for(int i = 0; i < links.length(); i++) {
+				    	if(links.getJSONObject(i).getInt("ns") == 0) {
+				    		result.add(links.getJSONObject(i).getString("*"));
+				    	}
+				    }
 			    }
 				isConnected = true;
 			} else {
@@ -65,5 +75,9 @@ public class httpClient {
 			e.printStackTrace();
 		}
 		return myURL;		
+	}
+	
+	public List<String> getResult(){
+		return isConnected ? result : null;
 	}
 }
