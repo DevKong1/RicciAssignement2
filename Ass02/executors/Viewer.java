@@ -30,7 +30,7 @@ public class Viewer extends JFrame {
 	private JTextField urlText;
 	private JTextField depthText;
 	private JButton run;
-	private HttpConnection httpConnection;
+	private SharedContext sharedContext;
 	
 	/**
 	 * Creates a view of the specified size (in pixels)
@@ -45,6 +45,7 @@ public class Viewer extends JFrame {
 		JFrame myFrame = new JFrame();
 		myFrame.setSize(new Dimension(w, h + 100));
 		myFrame.setLayout(new BorderLayout());
+		sharedContext = SharedContext.getIstance();
 
 		panel = new VisualiserPanel(w, h);
 		mainContainer = getContentPane();
@@ -55,6 +56,8 @@ public class Viewer extends JFrame {
 		depthText = new JTextField("1");
 		depthText.setMaximumSize(new Dimension(150,30));
 		run = new JButton("Run");
+		labelUrl = new JLabel("Insert a URL");
+		labelDepth = new JLabel("Insert a Depth");
 		
 		run.addActionListener(new ActionListener() {
 			
@@ -63,23 +66,17 @@ public class Viewer extends JFrame {
 				if(!isNumeric(depthText.getText())) {
 					JOptionPane.showMessageDialog(myFrame, "Insert a valid number");
 				} else {
-					try {
-						if(isURL(urlText.getText())) {
-							httpConnection = new HttpConnection(new URL(urlText.getText()));
-							httpConnection.connect();
-						} else {
-							JOptionPane.showMessageDialog(myFrame, "Error 404, insert a valid URL");
-						}
-					} catch (MalformedURLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+					if(isURL(urlText.getText())) {
+						sharedContext.setDepth(Integer.parseInt(depthText.getText()));
+						sharedContext.setInitialUrl(urlText.getText());
+						sharedContext.setBasicUrl();
+						sharedContext.running();
+					} else {
+						JOptionPane.showMessageDialog(myFrame, "Error 404, insert a valid URL");
 					}
 				}
 			}
 		});
-		
-		labelUrl = new JLabel("Insert a URL");
-		labelDepth = new JLabel("Insert a Depth");
 		
 		mainContainer.setLayout(new BoxLayout(mainContainer, BoxLayout.Y_AXIS));
 		componentPane.setLayout(new BoxLayout(componentPane, BoxLayout.X_AXIS));
