@@ -6,6 +6,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.graphstream.graph.Node;
+
 public class Master {
 	private SharedContext sharedContext;
 	private ExecutorService executors;

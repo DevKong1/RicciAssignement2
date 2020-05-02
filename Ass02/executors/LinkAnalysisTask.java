@@ -43,12 +43,16 @@ public class LinkAnalysisTask implements Runnable {
 			    reader.close();
 			    JSONObject jsonObject = new JSONObject(response.toString());
 			    JSONArray jsonArray = jsonObject.getJSONObject("parse").getJSONArray("links");
+			    sharedContext.addNode(content);
 			    for(int i = 0; i < jsonArray.length(); i++) {
 			    	if(jsonArray.getJSONObject(i).getInt("ns") == 0) {
-			    		if(!this.sharedContext.getGuiList().contains(jsonArray.getJSONObject(i).getString("*"))) {
-				    		this.sharedContext.setGuiList(jsonArray.getJSONObject(i).getString("*"));
-				    		this.sharedContext.setMasterList(jsonArray.getJSONObject(i).getString("*"));
-				    		SharedContext.log("" + jsonArray.getJSONObject(i).getString("*"));
+			    		String str = jsonArray.getJSONObject(i).getString("*");
+			    		if(!this.sharedContext.getGuiList().contains(str)) {
+				    		this.sharedContext.setGuiList(str);
+				    		this.sharedContext.setMasterList(str);
+				    		this.sharedContext.addNode(str);
+				    		this.sharedContext.addEdge(content+str, content, str);
+				    		SharedContext.log("" + str);
 			    		}
 			    	}
 			    }
@@ -60,7 +64,6 @@ public class LinkAnalysisTask implements Runnable {
 	
 	private void parseUrl() {
 		String parsedUrl = sharedContext.getBasicUrl()+"w/api.php?action=parse&page="+this.content.replaceAll("\\s", "_")+"&format=json&section=0&prop=links";
-		//System.out.println(parsedUrl);
 		try {
 			URL myURL = new URL(parsedUrl);
 			this.link = myURL;

@@ -10,10 +10,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.swing.*;
+
+import org.graphstream.graph.Node;
 
 public class Viewer extends JFrame {
 
@@ -43,7 +44,7 @@ public class Viewer extends JFrame {
 		setSize(w, h);
 		setResizable(false);
 		JFrame myFrame = new JFrame();
-		myFrame.setSize(new Dimension(w, h + 100));
+		myFrame.setSize(new Dimension(w, h));
 		myFrame.setLayout(new BorderLayout());
 		sharedContext = SharedContext.getIstance();
 
@@ -71,12 +72,18 @@ public class Viewer extends JFrame {
 						sharedContext.setInitialUrl(urlText.getText());
 						sharedContext.setBasicUrl();
 						sharedContext.running();
+						sharedContext.getGraph().display();
+						for(Node n : sharedContext.getGraph()) {
+							n.addAttribute("ui.label", n.getId());
+						}
 					} else {
 						JOptionPane.showMessageDialog(myFrame, "Error 404, insert a valid URL");
 					}
 				}
 			}
 		});
+
+		
 		
 		mainContainer.setLayout(new BoxLayout(mainContainer, BoxLayout.Y_AXIS));
 		componentPane.setLayout(new BoxLayout(componentPane, BoxLayout.X_AXIS));

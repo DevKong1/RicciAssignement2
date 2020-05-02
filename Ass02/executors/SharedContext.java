@@ -3,6 +3,10 @@ package executors;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.SingleGraph;
+
 public final class SharedContext {
 
 	private static final SharedContext SINGLETON = new SharedContext();
@@ -13,11 +17,39 @@ public final class SharedContext {
 	private int depth; 
 	private boolean start;
 	private String initialUrl;
+	private Graph graph;
 	
 	public SharedContext() {
 		guiLinks = new ArrayList<>();
 		masterLinks = new ArrayList<>();
 		start = false;
+		graph = new SingleGraph("grafo");
+		//graph.addAttribute("ui.stylesheet", "graph { fill-color: red; }");
+		//graph.display();
+	}
+	
+	public boolean nodeExists (String title) {
+		return graph.getNode(title) != null;
+	}
+	
+	public boolean edgeExists (String title) {
+		return graph.getEdge(title) != null;
+	}
+	
+	public void addNode (String title) {
+		if(!nodeExists(title)) {
+			graph.addNode(title);
+		}
+	}
+	
+	public void addEdge (String title, String elem1, String elem2) {
+		if(!edgeExists(title)) {
+			graph.addEdge(title, elem1, elem2);
+		}
+	}
+	
+	public Graph getGraph() {
+		return this.graph;
 	}
 	
 	// returns Singleton instance
