@@ -27,7 +27,11 @@ public class httpClient {
 			URL parsedUrl = parseUrl();
 			HttpURLConnection connection = (HttpURLConnection)parsedUrl.openConnection();
 			connection.setRequestMethod("GET");
+			try {
 			connection.connect();
+			} catch (Exception ConnectException) {
+				System.out.println("TIMEOUT");
+			}
 			
 			if(connection.getResponseCode() == 200) {
 				BufferedReader reader = new BufferedReader( new InputStreamReader(connection.getInputStream()));

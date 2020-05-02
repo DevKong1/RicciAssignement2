@@ -21,7 +21,7 @@ public class linksFinder {
 	
 	public void start() {
 		
-		Flowable<Voice> source = Flowable.create(emitter -> {		     
+		Observable<Voice> source = Observable.create(emitter -> {	     
 			log("starting...");
 			
 			new Thread(() -> {
@@ -33,30 +33,22 @@ public class linksFinder {
 							context.addNode(base.split("/")[4]);
 							List <String> titles = client.getResult();
 							for (String title : titles) {
-								log("source: "+ title); 
+								//log("source: "+ title); 
 								emitter.onNext(new Voice(1, title, base.split("/")[4]));
 							}
 						}
 					} catch (Exception ex){}
 				}
 			}).start();			
-		 }, BackpressureStrategy.BUFFER);
+		 });
 		
-		ConnectableFlowable<Voice> hotObs = source.publish();
-		hotObs.connect();
 		log("subscribing.");
 
 		//generate a new Flowable for each voice found util we reach desired depth
-		hotObs
-		.subscribeOn(Schedulers.computation())
+		source
+		.subscribeOn(Schedulers.io())
 		.subscribe((s) -> {
-			if(!context.nodeExists(s.getTitle())) {
-				context.addNode(s.getTitle());
-				context.addEdge(s.getFather()+s.getTitle(),s.getFather(),s.getTitle());
-				handleNode(s);
-			} else if(!context.edgeExists(s.getFather()+s.getTitle())) {
-				context.addEdge(s.getFather()+s.getTitle(),s.getFather(),s.getTitle());
-			}
+			handleNode(s);
 		}, Throwable::printStackTrace);
 		
 		while(!context.isEnd()) {		
@@ -64,10 +56,13 @@ public class linksFinder {
 	}
 	
 	private void handleNode(Voice node) {
+
+		log("Adding node "+node.getTitle());
+		context.addNode(node.getTitle());
+		context.addEdge(node.getFather()+node.getTitle(),node.getFather(),node.getTitle());
 		
-		//context.addNode(node.getTitle());
 		if(node.getDepth() < depth) {				
-			Flowable<Voice> newNode = Flowable.create(emitter -> {    
+			Observable<Voice> newNode = Observable.create(emitter -> {	  
 				URL converted = null;
 				try {
 					converted = new URL("https://it.wikipedia.org/wiki/"+node.getTitle());
@@ -82,29 +77,29 @@ public class linksFinder {
 						emitter.onNext(new Voice(node.getDepth()+1, title, node.getTitle()));
 					}
 				}
-			}, BackpressureStrategy.BUFFER);
+			});		
 			
-			ConnectableFlowable<Voice> hotNewNode = newNode.publish();
-			hotNewNode.connect();
-		
-			
-			hotNewNode
-			.subscribeOn(Schedulers.computation())
-			.subscribe((s) -> {
-				if(!context.nodeExists(s.getTitle())) {
-					context.addNode(s.getTitle());
-					context.addEdge(s.getFather()+s.getTitle(),s.getFather(),s.getTitle());
+			newNode
+			.subscribeOn(Schedulers.io())
+			.subscribe((s) -> {				
+				//if(!context.nodeExists(s.getTitle())) {
+					//log("Adding node "+s.getTitle());
+					//context.addNode(s.getTitle());
+					//log("Adding edge "+s.getFather()+s.getTitle());
+					//context.addEdge(s.getFather()+s.getTitle(),s.getFather(),s.getTitle());
 					handleNode(s);
-				} else if(!context.edgeExists(s.getFather()+s.getTitle())) {
-					context.addEdge(s.getFather()+s.getTitle(),s.getFather(),s.getTitle());
-				}
+				//} else if(!context.edgeExists(s.getFather()+s.getTitle()) && !context.edgeExists(s.getTitle()+s.getFather())) {
+					//log("Adding edge "+s.getFather()+s.getTitle());
+					//context.addEdge(s.getFather()+s.getTitle(),s.getFather(),s.getTitle());
+				//}
 			});	
-			
-			hotNewNode
+			/*
+			newNode
 			.observeOn(Schedulers.single())
 			.subscribe((s) -> {
 				log("GOT "+s.getTitle() + " FROM "+s.getFather());
-			});	
+			});*/
+			
 		}
 	}
 	
