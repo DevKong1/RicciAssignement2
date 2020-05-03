@@ -22,8 +22,12 @@ public class Master {
 				if(i == 1) {
 					try {
 						String initialContent = sharedContext.getInitialUrl().substring(30);
-						sharedContext.addNode(initialContent);
-						sharedContext.getGraph().getNode(initialContent).addAttribute("ui.label", sharedContext.getGraph().getNode(initialContent).getId());
+						synchronized (sharedContext.getGraph()) {
+							try {
+								sharedContext.addNode(initialContent);
+								sharedContext.getGraph().getNode(initialContent).addAttribute("ui.label", sharedContext.getGraph().getNode(initialContent).getId());
+							} catch (Exception e) {}
+						}
 						executors.execute(new LinkAnalysisTask(new URL(sharedContext.getInitialUrl()), this.sharedContext));
 					} catch (MalformedURLException e) {
 						e.printStackTrace();

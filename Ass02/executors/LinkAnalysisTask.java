@@ -47,21 +47,30 @@ public class LinkAnalysisTask implements Runnable {
 			    	return;
 			    }
 			    JSONArray jsonArray = jsonObject.getJSONObject("parse").getJSONArray("links");
-		    	sharedContext.addNode(content);
-		    	sharedContext.getGraph().getNode(content).addAttribute("ui.label", sharedContext.getGraph().getNode(content).getId());
+			    synchronized (sharedContext.getGraph()) {
+					try {
+						sharedContext.addNode(content);
+						sharedContext.getGraph().getNode(content).addAttribute("ui.label", sharedContext.getGraph().getNode(content).getId());
+					} catch(Exception e) {}
+				}
+		    	
 			    for(int i = 0; i < jsonArray.length(); i++) {
 			    	if(jsonArray.getJSONObject(i).getInt("ns") == 0) {
 			    		String str = jsonArray.getJSONObject(i).getString("*");
 			    		if(!this.sharedContext.getMasterList().contains(str)) {
 				    		this.sharedContext.setMasterList(str);
-				    		this.sharedContext.addNode(str);
-				    		if(!this.sharedContext.edgeExists(content+str) && !this.sharedContext.edgeExists(str+content)) {
-				    			this.sharedContext.addEdge(content+str, content, str);
-				    		}
+				    		synchronized (sharedContext.getGraph()) {
+				    			try {
+									this.sharedContext.addNode(str);
+						    		if(!this.sharedContext.edgeExists(content+str) && !this.sharedContext.edgeExists(str+content)) {
+						    			this.sharedContext.addEdge(content+str, content, str);
+						    		}
+						    		sharedContext.getGraph().getNode(str).addAttribute("ui.label", sharedContext.getGraph().getNode(str).getId());
+				    			} catch(Exception e) {}
+							}
 				    		//SharedContext.log("Added node: " + str + " and add edge: " + content+str);
 				    		//SharedContext.log("" + str);
-			    		} 
-			    		sharedContext.getGraph().getNode(str).addAttribute("ui.label", sharedContext.getGraph().getNode(str).getId());
+			    		}
 			    	}
 			    }
 			}
