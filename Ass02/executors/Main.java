@@ -3,7 +3,16 @@ package executors;
 public class Main {
 
 	public static void main(String[] args) {
-		Viewer view = new Viewer(620, 620);
+		SharedContext sharedContext = SharedContext.getIstance();
+		new Viewer(550, 200, sharedContext);
+		try {
+		    synchronized(sharedContext) {
+		        while(!sharedContext.isStarted()) {
+		            sharedContext.wait();
+		        }
+		        sharedContext.execute();
+		    }
+		} catch (InterruptedException e) {}
 	}
 
 }

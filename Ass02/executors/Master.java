@@ -6,14 +6,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.graphstream.graph.Node;
-
 public class Master {
 	private SharedContext sharedContext;
 	private ExecutorService executors;
 
-	public Master() {
-		sharedContext = SharedContext.getIstance();
+	public Master(final SharedContext sharedContext) {
+		this.sharedContext = sharedContext;
 	}
 	
 	public void compute() {
@@ -23,13 +21,15 @@ public class Master {
 				executors = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1);
 				if(i == 1) {
 					try {
+						String initialContent = sharedContext.getInitialUrl().substring(30);
+						sharedContext.addNode(initialContent);
+						sharedContext.getGraph().getNode(initialContent).addAttribute("ui.label", sharedContext.getGraph().getNode(initialContent).getId());
 						executors.execute(new LinkAnalysisTask(new URL(sharedContext.getInitialUrl()), this.sharedContext));
 					} catch (MalformedURLException e) {
 						e.printStackTrace();
 					}
 				} else {
 					for(String str : sharedContext.getMasterList()) {
-						//System.out.println(str);
 						executors.execute(new LinkAnalysisTask(str, this.sharedContext));
 					}
 				}

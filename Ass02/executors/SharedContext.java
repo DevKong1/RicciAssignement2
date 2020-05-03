@@ -2,9 +2,7 @@ package executors;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.graphstream.graph.Graph;
-import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
 
 public final class SharedContext {
@@ -12,20 +10,17 @@ public final class SharedContext {
 	private static final SharedContext SINGLETON = new SharedContext();
 	private static String BASICURL;
 	
-	private List<String> guiLinks;
 	private List<String> masterLinks;
 	private int depth; 
 	private boolean start;
 	private String initialUrl;
 	private Graph graph;
+	private Master master;
 	
 	public SharedContext() {
-		guiLinks = new ArrayList<>();
 		masterLinks = new ArrayList<>();
 		start = false;
 		graph = new SingleGraph("grafo");
-		//graph.addAttribute("ui.stylesheet", "graph { fill-color: red; }");
-		//graph.display();
 	}
 	
 	public boolean nodeExists (String title) {
@@ -69,20 +64,12 @@ public final class SharedContext {
 		this.start = false;
 	}
 	
-	public List<String> getGuiList() {
-		return this.guiLinks;
-	}
-	
-	public void setGuiList(final String list) {
-		this.guiLinks.add(list);
-	}
-	
 	public List<String> getMasterList() {
 		return this.masterLinks;
 	}
 	
-	public void setMasterList(final String list) {
-		this.masterLinks.add(list);
+	public void setMasterList(final String val) {
+		this.masterLinks.add(val);
 	}
 	
 	public String getInitialUrl() {
@@ -93,9 +80,16 @@ public final class SharedContext {
 		this.initialUrl = url;
 	}
 	
-	public void running() {
-		this.start = true;
-		new Master().compute();
+	public void running(final SharedContext sharedContext) {
+		synchronized(sharedContext) {
+		    start = true;
+		    master = new Master(sharedContext);
+		    sharedContext.notify();
+		}
+	}
+	
+	public void execute() {
+		this.master.compute();
 	}
 	
 	public boolean isStarted() {
