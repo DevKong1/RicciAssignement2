@@ -31,6 +31,7 @@ public class httpClient {
 			connection.connect();
 			} catch (Exception ConnectException) {
 				System.out.println("TIMEOUT");
+				return false;
 			}
 			
 			if(connection.getResponseCode() == 200) {

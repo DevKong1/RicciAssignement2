@@ -1,6 +1,8 @@
+import java.awt.Color;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
+import java.util.Random;
 
 import io.reactivex.rxjava3.core.*;
 import io.reactivex.rxjava3.flowables.ConnectableFlowable;
@@ -30,11 +32,11 @@ public class linksFinder {
 						URL converted = new URL(base);
 						httpClient client = new httpClient(converted);
 						if(client.connect()) {
-							context.addNode(base.split("/")[4]);
+							context.addNode(base.split("/")[4],"rgb(0,0,0);");
 							List <String> titles = client.getResult();
 							for (String title : titles) {
 								//log("source: "+ title); 
-								emitter.onNext(new Voice(1, title, base.split("/")[4]));
+								emitter.onNext(new Voice(1, title, base.split("/")[4], generateColor()));
 							}
 						}
 					} catch (Exception ex){}
@@ -54,27 +56,41 @@ public class linksFinder {
 		while(!context.isEnd()) {		
 		}
 	}
-	
+
 	private void handleNode(Voice node) {
 
-		log("Adding node "+node.getTitle());
-		context.addNode(node.getTitle());
-		context.addEdge(node.getFather()+node.getTitle(),node.getFather(),node.getTitle());
-		
-		if(node.getDepth() < depth) {				
+		if(!context.nodeExists(node.getTitle())) {
+			
+			context.addNode(node.getTitle(), node.getColor());
+			context.addEdge(node.getFather()+node.getTitle(),node.getFather(),node.getTitle());			
+			createAndSubscribe(node);
+		} else {
+			
+			context.addEdge(node.getFather()+node.getTitle(),node.getFather(),node.getTitle());			
+			createAndSubscribe(node);
+		}
+	}	
+	
+	private void createAndSubscribe(Voice node)
+	{
+		if(node.getDepth() < depth) {	
+			
 			Observable<Voice> newNode = Observable.create(emitter -> {	  
 				URL converted = null;
+				
 				try {
 					converted = new URL("https://it.wikipedia.org/wiki/"+node.getTitle());
 				} catch (MalformedURLException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+				
 				httpClient client = new httpClient(converted);
 				if(client.connect() && client.getResult() != null) {
+					
 					List <String> titles = client.getResult();
 					for (String title : titles) {
-						emitter.onNext(new Voice(node.getDepth()+1, title, node.getTitle()));
+						emitter.onNext(new Voice(node.getDepth()+1, title, node.getTitle(), node.getColor()));
 					}
 				}
 			});		
@@ -82,25 +98,18 @@ public class linksFinder {
 			newNode
 			.subscribeOn(Schedulers.io())
 			.subscribe((s) -> {				
-				//if(!context.nodeExists(s.getTitle())) {
-					//log("Adding node "+s.getTitle());
-					//context.addNode(s.getTitle());
-					//log("Adding edge "+s.getFather()+s.getTitle());
-					//context.addEdge(s.getFather()+s.getTitle(),s.getFather(),s.getTitle());
-					handleNode(s);
-				//} else if(!context.edgeExists(s.getFather()+s.getTitle()) && !context.edgeExists(s.getTitle()+s.getFather())) {
-					//log("Adding edge "+s.getFather()+s.getTitle());
-					//context.addEdge(s.getFather()+s.getTitle(),s.getFather(),s.getTitle());
-				//}
+				handleNode(s);
 			});	
-			/*
-			newNode
-			.observeOn(Schedulers.single())
-			.subscribe((s) -> {
-				log("GOT "+s.getTitle() + " FROM "+s.getFather());
-			});*/
-			
 		}
+	}
+
+	private String generateColor() {
+		Random rand = new Random();
+		float r = rand.nextFloat();
+		float g = rand.nextFloat();
+		float b = rand.nextFloat();
+		Color randomColor = new Color(r, g, b);
+		return "rgb(" + randomColor.getRed() + "," + randomColor.getGreen() + "," + randomColor.getBlue() + ");";
 	}
 	
 	private static void log(String msg) {
