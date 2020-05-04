@@ -32,14 +32,23 @@ public final class SharedContext {
 	}
 	
 	public void addNode (String title) {
-		if(!nodeExists(title)) {
-			graph.addNode(title);
+		synchronized (graph) {
+			try {
+				if(!nodeExists(title)) {
+					graph.addNode(title);
+					graph.getNode(title).addAttribute("ui.label", graph.getNode(title).getId());
+				}
+			} catch(Exception e) {}
 		}
 	}
 	
 	public void addEdge (String title, String elem1, String elem2) {
-		if(!edgeExists(title)) {
-			graph.addEdge(title, elem1, elem2);
+		synchronized (graph) {
+			try {
+				if(!edgeExists(title)) {
+					graph.addEdge(title, elem1, elem2);
+				}
+			} catch (Exception e) {}
 		}
 	}
 	

@@ -12,7 +12,9 @@ public class Main {
 		        }
 		        sharedContext.execute();
 		    }
-		} catch (InterruptedException e) {}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 }
