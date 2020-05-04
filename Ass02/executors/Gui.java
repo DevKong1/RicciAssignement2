@@ -1,6 +1,7 @@
 package executors;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -11,7 +12,10 @@ import java.net.URL;
 
 import javax.swing.*;
 
-public class Viewer extends JFrame {
+import org.graphstream.ui.view.View;
+import org.graphstream.ui.view.Viewer;
+
+public class Gui extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	private Container mainContainer;
@@ -28,13 +32,14 @@ public class Viewer extends JFrame {
 	 * @param w
 	 * @param h
 	 */
-	public Viewer(int w, int h, final SharedContext sharedContext) {
+	public Gui(int w, int h, final SharedContext sharedContext) {
 		setTitle("Graph Simulation");
 		setSize(w, h);
 		setResizable(false);
 		JFrame myFrame = new JFrame();
 		myFrame.setSize(new Dimension(w, h));
 		myFrame.setLayout(new BorderLayout());
+		Viewer viewer = new Viewer(sharedContext.getGraph(), Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
 
 		mainContainer = getContentPane();
 		componentPane = new JPanel();
@@ -69,6 +74,7 @@ public class Viewer extends JFrame {
 			}
 		});
 		
+		View view = viewer.addDefaultView(false);
 		mainContainer.setLayout(new BoxLayout(mainContainer, BoxLayout.Y_AXIS));
 		componentPane.setLayout(new BoxLayout(componentPane, BoxLayout.X_AXIS));
 		componentPane.add(labelUrl);
@@ -88,6 +94,7 @@ public class Viewer extends JFrame {
 				System.exit(-1);
 			}
 		});
+		myFrame.add((Component) view);
 		myFrame.getContentPane().add(mainContainer);
 		myFrame.setVisible(true);
 	}
