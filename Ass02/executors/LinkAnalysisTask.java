@@ -58,8 +58,6 @@ public class LinkAnalysisTask implements Runnable {
 				    		if(!this.sharedContext.edgeExists(content+str) && !this.sharedContext.edgeExists(str+content)) {
 				    			this.sharedContext.addEdge(content+str, content, str);
 				    		}
-				    		//SharedContext.log("Added node: " + str + " and add edge: " + content+str);
-				    		//SharedContext.log("" + str);
 			    		}
 			    	}
 			    }

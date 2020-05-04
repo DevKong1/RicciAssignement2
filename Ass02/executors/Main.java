@@ -4,7 +4,7 @@ public class Main {
 
 	public static void main(String[] args) {
 		SharedContext sharedContext = SharedContext.getIstance();
-		new Gui(550, 200, sharedContext);
+		new Gui(500, 180, sharedContext);
 		try {
 		    synchronized(sharedContext) {
 		        while(!sharedContext.isStarted()) {

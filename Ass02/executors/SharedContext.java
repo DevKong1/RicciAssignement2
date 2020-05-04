@@ -2,6 +2,9 @@ package executors;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.JLabel;
+
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.implementations.SingleGraph;
 
@@ -16,6 +19,7 @@ public final class SharedContext {
 	private String initialUrl;
 	private Graph graph;
 	private Master master;
+	private JLabel totalNodes;
 	
 	public SharedContext() {
 		masterLinks = new ArrayList<>();
@@ -111,6 +115,19 @@ public final class SharedContext {
 	
 	public String getBasicUrl() {
 		return SharedContext.BASICURL;
+	}
+	
+	public void setLabelCount(final JLabel jLabel) {
+		this.totalNodes = jLabel;
+	}
+	
+	public JLabel getLabelCount() {
+		return this.totalNodes;
+	}
+	
+	public void setLabelText(final int val) {
+		this.totalNodes.setText(this.totalNodes.getText() + val);
+		
 	}
 	
 	public static void log(String msg) {

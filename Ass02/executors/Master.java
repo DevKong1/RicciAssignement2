@@ -39,6 +39,8 @@ public class Master {
 					e.printStackTrace();
 				}
 			}
+			this.sharedContext.setLabelText(sharedContext.getGraph().getNodeCount());
+			System.out.println(" " + sharedContext.getGraph().getNodeCount());
 		}
 	}
 	
