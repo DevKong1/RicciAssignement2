@@ -75,7 +75,7 @@ public class Gui extends JFrame {
 						sharedContext.setDepth(Integer.parseInt(depthText.getText()));
 						sharedContext.setInitialUrl(urlText.getText());
 						sharedContext.setBasicUrl();
-						sharedContext.running(sharedContext);
+						sharedContext.running();
 						run.setEnabled(false);
 					} else {
 						JOptionPane.showMessageDialog(myFrame, "Error 404, insert a valid URL");

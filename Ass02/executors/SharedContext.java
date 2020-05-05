@@ -20,8 +20,10 @@ public final class SharedContext {
 	private Graph graph;
 	private Master master;
 	private JLabel totalNodes;
+	private boolean labelNodesIsSetted;
 	
 	public SharedContext() {
+		labelNodesIsSetted = false;
 		masterLinks = new ArrayList<>();
 		start = false;
 		graph = new SingleGraph("grafo");
@@ -82,7 +84,12 @@ public final class SharedContext {
 	}
 	
 	public void setMasterList(final String val) {
-		this.masterLinks.add(val);
+		synchronized (masterLinks) {
+			try {
+				this.masterLinks.add(val);
+			} catch(Exception e) {}
+		}
+		
 	}
 	
 	public String getInitialUrl() {
@@ -93,16 +100,19 @@ public final class SharedContext {
 		this.initialUrl = url;
 	}
 	
-	public void running(final SharedContext sharedContext) {
-		synchronized(sharedContext) {
-		    start = true;
-		    master = new Master(sharedContext);
-		    sharedContext.notify();
+	public void running() {
+		synchronized(this) {
+			try {
+			    start = true;
+			    master = new Master(this);
+			    this.notify();
+			} catch(Exception e) {}
 		}
 	}
 	
 	public void execute() {
-		this.master.compute();
+		this.master.execute();
+		//this.master.compute();
 	}
 	
 	public boolean isStarted() {
@@ -123,6 +133,14 @@ public final class SharedContext {
 	
 	public JLabel getLabelCount() {
 		return this.totalNodes;
+	}
+	
+	public boolean getIsLabelCountSetted() {
+		return this.labelNodesIsSetted;
+	}
+	
+	public void setLabelCount() {
+		this.labelNodesIsSetted = true;
 	}
 	
 	public void setLabelText(final int val) {
