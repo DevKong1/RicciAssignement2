@@ -3,11 +3,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.rxjava3.core.*;
-import io.reactivex.rxjava3.flowables.ConnectableFlowable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import io.reactivex.rxjava3.subjects.PublishSubject;
 
 public class linksFinder {
 
@@ -22,7 +21,7 @@ public class linksFinder {
 	}
 	
 	public void start() {
-		
+		//create the first observable which will generate a random color for all the first sons
 		Observable<Voice> source = Observable.create(emitter -> {	     
 			log("starting...");
 			
@@ -32,12 +31,15 @@ public class linksFinder {
 						URL converted = new URL(base);
 						httpClient client = new httpClient(converted);
 						if(client.connect()) {
-							context.addNode(base.split("/")[4],"rgb(0,0,0);");
+							String baseTitle = base.split("/")[4];
+							//TODO not hardcoded
+							context.addNode(baseTitle,"rgb(0,0,0);");
+							
 							List <String> titles = client.getResult();
 							for (String title : titles) {
-								//log("source: "+ title); 
-								emitter.onNext(new Voice(1, title, base.split("/")[4], generateColor()));
+								emitter.onNext(new Voice(1, title, baseTitle, generateColor()));
 							}
+							checkNodeForUpdates(new Voice(0,baseTitle,null,"rgb(0,0,0);"));
 						}
 					} catch (Exception ex){}
 				}
@@ -46,52 +48,58 @@ public class linksFinder {
 		
 		log("subscribing.");
 
-		//generate a new Flowable for each voice found util we reach desired depth
+		//generate a new Observable for each voice found util we reach desired depth
 		source
 		.subscribeOn(Schedulers.io())
 		.subscribe((s) -> {
 			handleNode(s);
-		}, Throwable::printStackTrace);
-		
-		while(!context.isEnd()) {		
-		}
+		}, Throwable::printStackTrace);		
 	}
 
 	private void handleNode(Voice node) {
+		//if the node exists add node and edge else add only edge
+		if(!context.nodeExists(node.getTitle())) {	
 
-		if(!context.nodeExists(node.getTitle())) {
-			
 			context.addNode(node.getTitle(), node.getColor());
-			context.addEdge(node.getFather()+node.getTitle(),node.getFather(),node.getTitle());			
-			createAndSubscribe(node);
-		} else {
+			context.addEdge(node.getFather() + node.getTitle(),node.getFather(),node.getTitle());			
+			createAndSubscribe(node);	
 			
-			context.addEdge(node.getFather()+node.getTitle(),node.getFather(),node.getTitle());			
-			createAndSubscribe(node);
+			checkNodeForUpdates(node);
+			
+		} else {			
+			//if the edge between the two exists this instruction will be ignored
+			context.addEdge(node.getFather() + node.getTitle(),node.getFather(),node.getTitle());
+			
+			createAndSubscribe(node);						
 		}
 	}	
 	
 	private void createAndSubscribe(Voice node)
 	{
+		//if reached desired depth don't go further down
 		if(node.getDepth() < depth) {	
 			
 			Observable<Voice> newNode = Observable.create(emitter -> {	  
 				URL converted = null;
 				
 				try {
-					converted = new URL("https://it.wikipedia.org/wiki/"+node.getTitle());
+					converted = new URL("https://it.wikipedia.org/wiki/" + node.getTitle());
 				} catch (MalformedURLException e) {
-					// TODO Auto-generated catch block
+					// TODO add further url check
 					e.printStackTrace();
+					return;
 				}
 				
 				httpClient client = new httpClient(converted);
+				
 				if(client.connect() && client.getResult() != null) {
 					
 					List <String> titles = client.getResult();
-					for (String title : titles) {
+					
+					for (String title : titles) {	
+						
 						emitter.onNext(new Voice(node.getDepth()+1, title, node.getTitle(), node.getColor()));
-					}
+					}								
 				}
 			});		
 			
@@ -101,6 +109,44 @@ public class linksFinder {
 				handleNode(s);
 			});	
 		}
+	}
+
+	//OPTIONAL PART, KEEP CHECKING FOREVER FOR UPDATES ON THIS NODE
+	private void checkNodeForUpdates(Voice node) {		
+		if(node.getDepth() < depth) {
+			
+			final URL converted;
+			
+			try {
+				converted = new URL("https://it.wikipedia.org/wiki/" + node.getTitle());
+			} catch (MalformedURLException e) {
+				// TODO add further url check
+				e.printStackTrace();
+				return;
+			}
+
+			httpClient client = new httpClient(converted);
+			
+			Observable
+			.interval(10, TimeUnit.SECONDS)
+			.subscribeOn(Schedulers.computation())
+			.subscribe((s) -> {
+			
+				if(client.connect() && client.getResult() != null) {
+					
+					List <String> titles = client.getResult();
+					
+					for (String title : titles) {	
+						log("CHECK UPDATES FROM " + node.getTitle());
+						if(!context.nodeExists(title)) {	
+							log("FOUND UPDATE FROM: "+node.getTitle()+ " --- " + title);
+							handleNode(new Voice(node.getDepth()+1, title, node.getTitle(), node.getColor()));
+						}
+					}												
+				}
+			});
+		}
+		
 	}
 
 	private String generateColor() {

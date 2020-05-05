@@ -2,24 +2,29 @@ import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
 
+import io.reactivex.rxjava3.subjects.PublishSubject;
+
 public final class SharedContext {
 
 	private static final SharedContext SINGLETON = new SharedContext();
-	private boolean end = false;
+	private PublishSubject<Integer> stream = PublishSubject.create();
 	private Graph graph;
 	
 	public SharedContext() {
 		graph = new SingleGraph("grafo");
 		graph.setStrict(false);
-		graph.display();
 	}
 	
 	public boolean nodeExists (String title) {
-		return graph.getNode(title) != null;
+		synchronized(graph) {
+			return graph.getNode(title) != null;
+		}
 	}
 	
 	public boolean edgeExists (String title) {
-		return graph.getEdge(title) != null;
+		synchronized(graph) {
+			return graph.getEdge(title) != null;
+		}
 	}
 
 	public void addNode (String title, String color) {
@@ -27,6 +32,7 @@ public final class SharedContext {
 			Node node = graph.addNode(title);
 			node.addAttribute("ui.label", title);
 			node.addAttribute("ui.style", "fill-color: "+ color);
+			stream.onNext(graph.getNodeCount());
 		}
 	}
 	
@@ -34,12 +40,15 @@ public final class SharedContext {
 		synchronized(graph) {
 			graph.addEdge(title, elem1, elem2);
 		}
+	}	
+	
+	public Graph getGraph() {
+		return graph;
 	}
 	
-	public boolean isEnd () {
-		return end;
+	public PublishSubject<Integer> getStream() {
+		return stream;
 	}
-	
 	
 	// returns Singleton instance
 	public static SharedContext getIstance() {
