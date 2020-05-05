@@ -35,7 +35,7 @@ public class MyVerticle extends AbstractVerticle {
 	@Override
 	public void start(Future<Void> startFuture) {
 		System.out.println("I've been deployed!");
-		Future<Void> steps = Future.future();
+		Future<Void> steps;
 		if(dept < maxDept) {
 		     client = WebClient.create(vertx,
 		            new WebClientOptions()
@@ -67,7 +67,8 @@ public class MyVerticle extends AbstractVerticle {
 	}
 
 	private Future<Void> compute(List<String>toBeSearched) {
-		 Promise<Void> promise = Promise.promise();
+		Promise<Void> promise = Promise.promise();
+		links = new JsonArray();
 		List<Future<Void>>promises = new LinkedList<>();
 		if(dept++ < maxDept) {
 			for(String father : toBeSearched) {
@@ -104,7 +105,7 @@ public class MyVerticle extends AbstractVerticle {
 	private Future<Void>getWords(HttpResponse<JsonObject> response){
 		Promise<Void> promise = Promise.promise();
 		JsonObject body = response.body();
-		body.getJsonObject("parse").getJsonArray("links");
+		links.add(body.getJsonObject("parse").getJsonArray("links"));
 		promise.complete();
 		return promise.future();
 	}
