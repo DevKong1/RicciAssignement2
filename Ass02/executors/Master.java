@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 public class Master {
 	private SharedContext sharedContext;
 	private ExecutorService executors;
-	private final ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
+	private ForkJoinPool forkJoinPool;
 	
 	public Master(final SharedContext sharedContext) {
 		this.sharedContext = sharedContext;
@@ -49,6 +49,7 @@ public class Master {
 	public void execute() {
 		if(sharedContext.isStarted()) {
 			try {
+				forkJoinPool = new ForkJoinPool();//ForkJoinPool.commonPool();
 				forkJoinPool.invoke(new HttpRequestTask(this.sharedContext, new URL(sharedContext.getInitialUrl())));
 			} catch (MalformedURLException e) {
 				e.printStackTrace();

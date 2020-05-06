@@ -52,6 +52,7 @@ public class LinkAnalysisTask implements Runnable {
 			    for(int i = 0; i < jsonArray.length(); i++) {
 			    	if(jsonArray.getJSONObject(i).getInt("ns") == 0) {
 			    		String str = jsonArray.getJSONObject(i).getString("*");
+			    		//SharedContext.log(str);
 			    		if(!this.sharedContext.getMasterList().contains(str)) {
 				    		this.sharedContext.setMasterList(str);
 							this.sharedContext.addNode(str);
