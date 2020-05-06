@@ -23,9 +23,8 @@ public class GraphRappresentationTask extends RecursiveAction{
 	    for(int i = 0; i < links.length(); i++) {
 	    	if(links.getJSONObject(i).getInt("ns") == 0) {
 	    		String str = links.getJSONObject(i).getString("*");
-	    		if(!this.sharedContext.getMasterList().contains(str)) {
-		    		this.sharedContext.setMasterList(str);
-					this.sharedContext.addNode(str);
+	    		if(!sharedContext.nodeExists(str)) {
+	    			this.sharedContext.addNode(str);
 	    		}
 	    		if(!this.sharedContext.edgeExists(content+str) && !this.sharedContext.edgeExists(str+content)) {
 	    			this.sharedContext.addEdge(content+str, content, str);

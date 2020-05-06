@@ -41,6 +41,7 @@ public final class SharedContext {
 		synchronized (graph) {
 			try {
 				if(!nodeExists(title)) {
+					//System.out.println(title);
 					graph.addNode(title);
 					graph.getNode(title).addAttribute("ui.label", graph.getNode(title).getId());
 				}
@@ -51,9 +52,7 @@ public final class SharedContext {
 	public void addEdge (String title, String elem1, String elem2) {
 		synchronized (graph) {
 			try {
-				if(!edgeExists(title)) {
-					graph.addEdge(title, elem1, elem2);
-				}
+				graph.addEdge(title, elem1, elem2);
 			} catch (Exception e) {}
 		}
 	}
@@ -83,13 +82,17 @@ public final class SharedContext {
 		return this.masterLinks;
 	}
 	
-	public void setMasterList(final String val) {
+	public boolean setMasterList(final String val) {
 		synchronized (masterLinks) {
 			try {
-				this.masterLinks.add(val);
+				if(!masterLinks.contains(val)) {
+					//System.out.println(val);
+					this.masterLinks.add(val);
+					return true;
+				}
 			} catch(Exception e) {}
 		}
-		
+		return false;
 	}
 	
 	public String getInitialUrl() {

@@ -39,9 +39,17 @@ public class HttpRequestTask extends RecursiveAction {
 			if(depth == 1) {
 				sharedContext.addNode(sharedContext.getInitialUrl().substring(30));
 			}
+			//SharedContext.log(content);
+			/*if(!this.sharedContext.setMasterList(content)) {
+				//SharedContext.log("I cant add this: " + content);
+				return;
+			}*/
+			//SharedContext.log(content);
 			
 			JSONObject jsonObject = this.getConnectionResponse();
+			//For bad request 400
 		    if(!jsonObject.has("parse")) {
+		    	//System.out.println("Ciao");
 		    	return;
 		    }
 		    
@@ -52,6 +60,7 @@ public class HttpRequestTask extends RecursiveAction {
 		    		HttpRequestTask httpTask = new HttpRequestTask(this.sharedContext, str, depth);
 		    		tasks.add(httpTask);
 		    		httpTask.fork();
+		    		//SharedContext.log(str);
 		    	}
 		    }
 		    
@@ -72,6 +81,7 @@ public class HttpRequestTask extends RecursiveAction {
 			this.link = myURL;
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
+			return;
 		}
 	}
 	
@@ -97,7 +107,6 @@ public class HttpRequestTask extends RecursiveAction {
 			e.printStackTrace();
 		}
 		return jsonObject;
-		
 	}
 
 }
