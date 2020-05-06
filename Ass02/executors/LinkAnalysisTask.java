@@ -55,9 +55,9 @@ public class LinkAnalysisTask implements Runnable {
 			    		if(!this.sharedContext.getMasterList().contains(str)) {
 				    		this.sharedContext.setMasterList(str);
 							this.sharedContext.addNode(str);
-				    		if(!this.sharedContext.edgeExists(content+str) && !this.sharedContext.edgeExists(str+content)) {
-				    			this.sharedContext.addEdge(content+str, content, str);
-				    		}
+			    		}
+			    		if(!this.sharedContext.edgeExists(content+str) && !this.sharedContext.edgeExists(str+content)) {
+			    			this.sharedContext.addEdge(content+str, content, str);
 			    		}
 			    	}
 			    }
