@@ -12,25 +12,21 @@ import java.util.concurrent.RecursiveAction;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class NewLinkTask extends RecursiveAction {
+public class HttpRequestTask extends RecursiveAction {
 	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
 	private SharedContext sharedContext;
 	private URL link;
 	private String content;
 	private int depth;
 	
-	public NewLinkTask(final SharedContext sharedContext, final URL link) {
+	public HttpRequestTask(final SharedContext sharedContext, final URL link) {
 		this.sharedContext = sharedContext;
 		this.link = link;
 		this.content = link.toString().substring(30);
 		this.depth = 0;
 	}
 	
-	public NewLinkTask(final SharedContext sharedContext, final String content, final int depth) {
+	public HttpRequestTask(final SharedContext sharedContext, final String content, final int depth) {
 		this.sharedContext = sharedContext;
 		this.content = content;
 		this.depth = depth;
@@ -50,22 +46,18 @@ public class NewLinkTask extends RecursiveAction {
 		    }
 		    
 		    JSONArray jsonArray = jsonObject.getJSONObject("parse").getJSONArray("links");
-		    sharedContext.addNode(content);
 		    for(int i = 0; i < jsonArray.length(); i++) {
 		    	if(jsonArray.getJSONObject(i).getInt("ns") == 0) {
 		    		String str = jsonArray.getJSONObject(i).getString("*");
-		    		NewLinkTask newLinkTask = new NewLinkTask(this.sharedContext, str, depth);
-		    		tasks.add(newLinkTask);
-		    		newLinkTask.fork();
-		    		if(!this.sharedContext.getMasterList().contains(str)) {
-			    		this.sharedContext.setMasterList(str);
-						this.sharedContext.addNode(str);
-			    		if(!this.sharedContext.edgeExists(content+str) && !this.sharedContext.edgeExists(str+content)) {
-			    			this.sharedContext.addEdge(content+str, content, str);
-			    		}
-		    		}
+		    		HttpRequestTask httpTask = new HttpRequestTask(this.sharedContext, str, depth);
+		    		tasks.add(httpTask);
+		    		httpTask.fork();
 		    	}
 		    }
+		    
+		    GraphRappresentationTask graphTask = new GraphRappresentationTask(sharedContext, jsonArray, content);
+		    tasks.add(graphTask);
+		    graphTask.fork();
 			
 		    for(RecursiveAction task : tasks) {
 		    	task.join();
