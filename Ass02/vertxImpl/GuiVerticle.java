@@ -34,6 +34,11 @@ public class GuiVerticle extends AbstractVerticle {
 		graph = new SingleGraph("grafo");
 		view = new Gui(1024, 768, eb, graph);
 		view.display();
+		
+		/**
+		 * When a GUI worker verticle is deployed, it launches the view and
+		 * the first verticle.
+		 */
 		eb.consumer("init", message -> {
 				String[] f = message.body().toString().split(":");
 				LinkedList<String> words = new LinkedList<String>();
@@ -42,22 +47,32 @@ public class GuiVerticle extends AbstractVerticle {
 				initialMillis = System.currentTimeMillis();
 				vertx.deployVerticle(new MyVerticle(instancies,DEPT, maxDept, words));
 		});
+		
+		/**
+		 * Every time a word is found and a node has to be added, it's sent through a
+		 * "updateView" message.
+		 */
 		eb.consumer("updateView", message -> {
-			// System.out.println("RECEIVED");
-			// view.updateView((List<String>)message.body());
 			DataHolder c = (DataHolder) message.body();
 			NodeTuple newWords = c.getData();
 			updateView(newWords);
+			view.updateLabel();
 		});
+		
+		/**
+		 * When a verticle ends its computation because the targeted depth is reached,
+		 * it sends a stop message, when every computing verticle sends the stop message,
+		 * vertx shuts them down.
+		 */
 		eb.consumer("stop", message -> {
-			System.out.println("RECEIVED A STOP; WAITING FOR OTHERS");
+			System.out.println("RECEIVED  STOP NUMBER "+count+" ; WAITING FOR OTHERS");
 			finalMillis = System.currentTimeMillis();
 			long diff = finalMillis - initialMillis;
 			count++;
 			if (count == Math.pow(instancies, maxDept-1)) {
 				System.out.println("EVERYONE STOPPED, TIME:" + diff);
-				//vertx.deploymentIDs().forEach(vertx::undeploy);
 				view.updateLabel();
+				//Closes the program and undeploys every verticle instanciated.
 				vertx.close();
 			}
 
@@ -69,11 +84,13 @@ public class GuiVerticle extends AbstractVerticle {
 		super.stop(stopFuture);
 		System.out.println("MyGUIVerticle stopped!");
 	}
-
+	
+	/**
+	 * Just updates the view graph every time MyVerticle finds a new word.
+	 */
 	private void updateView(final NodeTuple node) {
 		String value = node.getValue();
 		String father = node.getFather();
-		synchronized (graph) {
 			try {
 				if (!nodeExists(value)) {
 					graph.addNode(value);
@@ -81,14 +98,18 @@ public class GuiVerticle extends AbstractVerticle {
 					// System.out.println("NNOODDII: "+graph.getNodeCount());
 					graph.addEdge(father + value, father, value);
 				} else {
+					/*
+					 * If a node already is in the graph, an edge between the already displayed node and the just found node's father is created
+					 */
 					graph.addEdge(father + value, father, value);
 				}
 			} catch (Exception e) {
 			}
 		}
-	}
-
-	private boolean nodeExists(String title) {
+	/**
+	 * Checks if a certain word is already in the graph. 
+	 */
+	private boolean nodeExists(final String title) {
 		return graph.getNode(title) != null;
 	}
 }

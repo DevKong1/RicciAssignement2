@@ -1,8 +1,10 @@
 package vertxImpl;
 
-import java.util.List;
-
-
+/**
+ * 
+ * Holder used to send data through the vert.x event bus.
+ *
+ */
 final class DataHolder {
     private final NodeTuple data;
     @Override

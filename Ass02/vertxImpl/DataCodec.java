@@ -2,7 +2,11 @@ package vertxImpl;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
-
+/**
+ * 
+ * Default codec to allow a data holder to be able to be sent across the vert.x eventbus
+ *
+ */
 class DataCodec implements MessageCodec<DataHolder, DataHolder> {
 
 
