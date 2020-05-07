@@ -47,6 +47,7 @@ public class Master {
 	}
 	
 	public void execute() {
+		long c = System.currentTimeMillis();
 		if(sharedContext.isStarted()) {
 			try {
 				forkJoinPool = new ForkJoinPool();
@@ -55,6 +56,8 @@ public class Master {
 				e.printStackTrace();
 			}
 		}
+		long d = System.currentTimeMillis();
+		System.out.println(""+(d-c));
 		
 	}
 	
