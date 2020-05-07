@@ -1,6 +1,5 @@
 package vertxImpl;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -14,6 +13,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.codec.BodyCodec;
+import io.vertx.rxjava.core.Vertx;
 
 public class MyVerticle extends AbstractVerticle {
 	private static final String WIKI = "hhttps://it.wikipedia.org/w/api.php";
@@ -26,17 +26,22 @@ public class MyVerticle extends AbstractVerticle {
 	private List<String> assigned;
 	private LinkedList<String> toAssign;
 	private JsonArray links;
-	int k;
+	private int instancies;
 
-	public MyVerticle(int dept, int maxDept, final List<String> voices) {
+	public MyVerticle(int instancies, int dept, int maxDept, final List<String> voices) {
 		this.dept = dept;
 		this.maxDept = maxDept;
 		this.assigned = voices;
+		this.instancies = instancies;
 	}
 
 	@Override
 	public void start(Future<Void> startFuture) {
-		System.out.println("I've been deployed!");
+		try {
+			super.start(startFuture);
+		} catch (Exception e) {
+		}
+		// System.out.println("I've been deployed!");
 		this.words = new LinkedList<NodeTuple>();
 		this.toAssign = new LinkedList<String>();
 		eb = vertx.eventBus();
@@ -55,18 +60,48 @@ public class MyVerticle extends AbstractVerticle {
 			if (dept == maxDept) {
 				eb.send("stop", "");
 			} else {
-				System.out.println("Passing onto a new level");
-				List<String>c1 = toAssign.subList(0, toAssign.size()/2);
-				List<String>c2 = toAssign.subList(toAssign.size()/2, toAssign.size());
-				vertx.deployVerticle(new MyVerticle(dept, maxDept,c1));
-				vertx.deployVerticle(new MyVerticle(dept, maxDept,c2));
+				// System.out.println("Passing onto a new level");
+				// System.out.println(toAssign.size());
+				int tmp = toAssign.size() / instancies;
+				int oldTmp = 0;
+				List<String> verticleWords;
+				/*
+				 * List<String>c1 = toAssign.subList(oldTmp, oldTmp+=tmp);
+				 * //System.out.println(c1.size()); List<String>c2 = toAssign.subList(oldTmp,
+				 * oldTmp+=tmp); //System.out.println(c2.size()); List<String>c3 =
+				 * toAssign.subList(oldTmp, oldTmp+=tmp); //System.out.println(c3.size());
+				 * List<String>c4 = toAssign.subList(oldTmp, oldTmp+=tmp);
+				 * //System.out.println(c4.size()); List<String>c5 = toAssign.subList(oldTmp,
+				 * oldTmp+=tmp); //System.out.println(c4.size()); List<String>c6 =
+				 * toAssign.subList(oldTmp, toAssign.size()); //System.out.println(c4.size());
+				 * vertx.deployVerticle(new MyVerticle(instancies,dept, maxDept,c1));
+				 * vertx.deployVerticle(new MyVerticle(instancies,dept, maxDept,c2));
+				 * vertx.deployVerticle(new MyVerticle(instancies,dept, maxDept,c3));
+				 * vertx.deployVerticle(new MyVerticle(instancies,dept, maxDept,c4));
+				 * vertx.deployVerticle(new MyVerticle(instancies,dept, maxDept,c5));
+				 * vertx.deployVerticle(new MyVerticle(instancies,dept, maxDept,c6));
+				 */
+				if(tmp>0) {
+					for (int i = 0; i < instancies; i++) {
+						if (i == instancies - 1) {
+							verticleWords = toAssign.subList(oldTmp, toAssign.size());
+							vertx.deployVerticle(new MyVerticle(instancies, dept, maxDept, verticleWords));
+						} else {
+							verticleWords = toAssign.subList(oldTmp, oldTmp += tmp);
+							vertx.deployVerticle(new MyVerticle(instancies, dept, maxDept, verticleWords));
+						}
+					}
+				}else {
+					vertx.deployVerticle(new MyVerticle(instancies, dept, maxDept, toAssign));
+				}
 			}
 		});
 	}
 
 	@Override
 	public void stop(final Future<Void> stopFuture) throws Exception {
-		System.out.println("MyVerticle stopped!");
+		super.stop(stopFuture);
+		System.out.println("MyVerticle at dept " + dept + " stopped!");
 	}
 
 	private Future<Void> compute(List<String> toBeSearched) {
@@ -79,7 +114,7 @@ public class MyVerticle extends AbstractVerticle {
 			if (c.size() > 0) {
 
 				father = c.get(0);
-				client.get(WIKI).addQueryParam("action", "parse").addQueryParam("page", father)
+				client.get(WIKI).addQueryParam("action", "parse").addQueryParam("page", father.replaceAll("\\s", "_"))
 						.addQueryParam("format", "json").addQueryParam("section", "0").addQueryParam("prop", "links")
 						.as(BodyCodec.jsonObject()).send(ar -> {
 							if (ar.succeeded()) {
@@ -96,8 +131,13 @@ public class MyVerticle extends AbstractVerticle {
 									});
 								});
 							} else {
-								System.out.println("ERROR 404");
-								compute(c);
+								// System.out.println("ERROR 404");
+								// System.out.println(ar.cause());
+								// System.out.println(father);
+								c.remove(0);
+								compute(c).onComplete(t2 -> {
+									promise.complete();
+								});
 							}
 						});
 			} else {
@@ -123,9 +163,7 @@ public class MyVerticle extends AbstractVerticle {
 			System.out.println("BODY EMPTY");
 			promise.complete();
 		}
-		/**
-		 * Check if links has to be assigned or has to be links.add
-		 */
+
 		if (body.getJsonObject("parse") == null || body.getJsonObject("parse").getJsonArray("links") == null) {
 			System.out.println("LINK EMPTY, FATHER:" + father);
 			promise.complete();
@@ -151,26 +189,11 @@ public class MyVerticle extends AbstractVerticle {
 		return promise.future();
 	}
 
-	/*
-	 * private Future<Void> updateWordList(final String father,final JsonArray
-	 * links) { Promise<Void> promise = Promise.promise();
-	 * System.out.println("Updating lists"); assigned = new ArrayList<String>();
-	 * words = new ArrayList<NodeTuple>(); for (int i = 0; i < links.size(); i++) {
-	 * String value = links.getJsonObject(i).getString("*"); if
-	 * (links.getJsonObject(i).getLong("ns") == 0) { if(dept==0) { words.add(new
-	 * NodeTuple(null,value)); }else { words.add(new NodeTuple(father,value)); } }
-	 * assigned.add(value); } promise.complete(); System.out.println("Updated");
-	 * return promise.future(); }
-	 */
-
 	private Future<Void> updateView(NodeTuple word) {
 		Promise<Void> promise = Promise.promise();
-		// System.out.println("Sending");
 		eb.send("updateView", new DataHolder(word));
 		promise.complete();
-		// System.out.println("SENT");
 		return promise.future();
 	}
-
 
 }
