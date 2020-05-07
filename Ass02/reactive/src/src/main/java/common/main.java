@@ -1,3 +1,8 @@
+package common;
+
+import View.Gui;
+import control.SharedContext;
+
 public class main {
 	
 	public static void main(String[] args) {

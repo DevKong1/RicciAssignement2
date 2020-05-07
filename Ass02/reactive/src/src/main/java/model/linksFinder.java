@@ -1,3 +1,5 @@
+package model;
+
 import java.awt.Color;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -5,6 +7,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import control.SharedContext;
 import io.reactivex.rxjava3.core.*;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -25,25 +28,21 @@ public class linksFinder {
 		Observable<Voice> source = Observable.create(emitter -> {	     
 			log("starting...");
 			
-			new Thread(() -> {
-				if(depth > 0){
-					try {
-						URL converted = new URL(base);
-						httpClient client = new httpClient(converted);
-						if(client.connect()) {
-							String baseTitle = base.split("/")[4];
-							//TODO not hardcoded
-							context.addNode(baseTitle,"rgb(0,0,0);");
-							
-							List <String> titles = client.getResult();
-							for (String title : titles) {
-								emitter.onNext(new Voice(1, title, baseTitle, generateColor()));
-							}
-							checkNodeForUpdates(new Voice(0,baseTitle,null,"rgb(0,0,0);"));
-						}
-					} catch (Exception ex){}
+			if(depth > 0){
+				URL converted = new URL(base);
+				httpClient client = new httpClient(converted, context);
+				if(client.connect()) {
+					String baseTitle = base.split("/")[4];
+					//TODO not hardcoded
+					context.addNode(baseTitle,"rgb(0,0,0);");
+					
+					List <String> titles = client.getResult();
+					for (String title : titles) {
+						emitter.onNext(new Voice(1, title, baseTitle, generateColor()));
+					}
+					checkNodeForUpdates(new Voice(0,baseTitle,null,"rgb(0,0,0);"));
 				}
-			}).start();			
+			}	
 		 });
 		
 		log("subscribing.");
@@ -53,7 +52,7 @@ public class linksFinder {
 		.subscribeOn(Schedulers.io())
 		.subscribe((s) -> {
 			handleNode(s);
-		}, Throwable::printStackTrace);		
+		}, Throwable::printStackTrace);
 	}
 
 	private void handleNode(Voice node) {
@@ -62,9 +61,7 @@ public class linksFinder {
 
 			context.addNode(node.getTitle(), node.getColor());
 			context.addEdge(node.getFather() + node.getTitle(),node.getFather(),node.getTitle());			
-			createAndSubscribe(node);	
-			
-			checkNodeForUpdates(node);
+			createAndSubscribe(node);		
 			
 		} else {			
 			//if the edge between the two exists this instruction will be ignored
@@ -72,6 +69,9 @@ public class linksFinder {
 			
 			createAndSubscribe(node);						
 		}
+		
+		//Check for updates on the nodes
+		checkNodeForUpdates(node);
 	}	
 	
 	private void createAndSubscribe(Voice node)
@@ -90,7 +90,7 @@ public class linksFinder {
 					return;
 				}
 				
-				httpClient client = new httpClient(converted);
+				httpClient client = new httpClient(converted, context);
 				
 				if(client.connect() && client.getResult() != null) {
 					
@@ -125,11 +125,11 @@ public class linksFinder {
 				return;
 			}
 
-			httpClient client = new httpClient(converted);
+			httpClient client = new httpClient(converted, context);
 			
 			Observable
 			.interval(10, TimeUnit.SECONDS)
-			.subscribeOn(Schedulers.computation())
+			.subscribeOn(Schedulers.io())
 			.subscribe((s) -> {
 			
 				if(client.connect() && client.getResult() != null) {
@@ -137,7 +137,6 @@ public class linksFinder {
 					List <String> titles = client.getResult();
 					
 					for (String title : titles) {	
-						log("CHECK UPDATES FROM " + node.getTitle());
 						if(!context.nodeExists(title)) {	
 							log("FOUND UPDATE FROM: "+node.getTitle()+ " --- " + title);
 							handleNode(new Voice(node.getDepth()+1, title, node.getTitle(), node.getColor()));

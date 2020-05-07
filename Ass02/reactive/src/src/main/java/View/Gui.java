@@ -1,3 +1,5 @@
+package View;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -21,6 +23,8 @@ import org.graphstream.ui.swingViewer.ViewPanel;
 import org.graphstream.ui.view.Camera;
 import org.graphstream.ui.view.View;
 import org.graphstream.ui.view.Viewer;
+
+import control.SharedContext;
 
 public class Gui extends JFrame {
 
@@ -88,7 +92,8 @@ public class Gui extends JFrame {
 					JOptionPane.showMessageDialog(myFrame, "Insert a valid number");
 				} else if(isURL(urlText.getText())) {
 					run.setEnabled(false);
-					new linksFinder(sharedContext,urlText.getText(),Integer.parseInt(depthText.getText())).start();					
+					sharedContext.setInitialUrl(urlText.getText());
+					sharedContext.Start(urlText.getText(),Integer.parseInt(depthText.getText()));					
 				} else {
 					JOptionPane.showMessageDialog(myFrame, "Error 404, insert a valid URL");
 				}

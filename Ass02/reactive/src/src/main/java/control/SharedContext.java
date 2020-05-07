@@ -1,7 +1,11 @@
+package control;
+
 import org.graphstream.graph.Graph;
+
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
 
+import model.linksFinder;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
 public final class SharedContext {
@@ -9,10 +13,16 @@ public final class SharedContext {
 	private static final SharedContext SINGLETON = new SharedContext();
 	private PublishSubject<Integer> stream = PublishSubject.create();
 	private Graph graph;
+	private static String BASICURL;
+	private String initialUrl;
 	
 	public SharedContext() {
 		graph = new SingleGraph("grafo");
 		graph.setStrict(false);
+	}
+	
+	public void Start(String base, Integer depth) {
+		new linksFinder(getIstance(), base, depth).start();	
 	}
 	
 	public boolean nodeExists (String title) {
@@ -59,4 +69,20 @@ public final class SharedContext {
 		System.out.println("[ " + Thread.currentThread().getName() + "  ] " + msg);
 	}
 
+	public void setBasicUrl() {
+		SharedContext.BASICURL = this.initialUrl.toString().substring(0, 25);
+	}
+	
+	public String getBasicUrl() {
+		return SharedContext.BASICURL;
+	}
+
+	public String getInitialUrl() {
+		return this.initialUrl;
+	}
+	
+	public void setInitialUrl(final String url) {
+		this.initialUrl = url;
+		setBasicUrl();
+	}
 }
