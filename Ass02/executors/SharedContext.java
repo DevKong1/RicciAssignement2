@@ -21,8 +21,10 @@ public final class SharedContext {
 	private Master master;
 	private JLabel totalNodes;
 	private boolean labelNodesIsSetted;
+	private int nNodes;
 	
 	public SharedContext() {
+		nNodes = 0;
 		labelNodesIsSetted = false;
 		masterLinks = new ArrayList<>();
 		start = false;
@@ -40,11 +42,10 @@ public final class SharedContext {
 	public void addNode (String title) {
 		synchronized (graph) {
 			try {
-				if(!nodeExists(title)) {
-					//System.out.println(title);
-					graph.addNode(title);
-					graph.getNode(title).addAttribute("ui.label", graph.getNode(title).getId());
-				}
+				//System.out.println(title);
+				graph.addNode(title);
+				graph.getNode(title).addAttribute("ui.label", graph.getNode(title).getId());
+				setLabelText(++nNodes);
 			} catch(Exception e) {}
 		}
 	}
@@ -147,7 +148,7 @@ public final class SharedContext {
 	}
 	
 	public void setLabelText(final int val) {
-		this.totalNodes.setText(this.totalNodes.getText() + val);
+		this.totalNodes.setText("Total Nodes: " + val);
 		
 	}
 	

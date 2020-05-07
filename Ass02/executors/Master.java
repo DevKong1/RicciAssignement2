@@ -49,13 +49,13 @@ public class Master {
 	public void execute() {
 		if(sharedContext.isStarted()) {
 			try {
-				forkJoinPool = new ForkJoinPool();//ForkJoinPool.commonPool();
+				forkJoinPool = new ForkJoinPool();
 				forkJoinPool.invoke(new HttpRequestTask(this.sharedContext, new URL(sharedContext.getInitialUrl())));
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			}
 		}
-		this.sharedContext.setLabelText(sharedContext.getGraph().getNodeCount());
+		
 	}
 	
 }

@@ -2,9 +2,11 @@ package executors;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.RecursiveAction;
@@ -39,17 +41,10 @@ public class HttpRequestTask extends RecursiveAction {
 			if(depth == 1) {
 				sharedContext.addNode(sharedContext.getInitialUrl().substring(30));
 			}
-			//SharedContext.log(content);
-			/*if(!this.sharedContext.setMasterList(content)) {
-				//SharedContext.log("I cant add this: " + content);
-				return;
-			}*/
-			//SharedContext.log(content);
 			
 			JSONObject jsonObject = this.getConnectionResponse();
 			//For bad request 400
-		    if(!jsonObject.has("parse")) {
-		    	//System.out.println("Ciao");
+		    if(jsonObject==null || !jsonObject.has("parse")) {
 		    	return;
 		    }
 		    
@@ -60,14 +55,13 @@ public class HttpRequestTask extends RecursiveAction {
 		    		HttpRequestTask httpTask = new HttpRequestTask(this.sharedContext, str, depth);
 		    		tasks.add(httpTask);
 		    		httpTask.fork();
-		    		//SharedContext.log(str);
 		    	}
 		    }
 		    
 		    GraphRappresentationTask graphTask = new GraphRappresentationTask(sharedContext, jsonArray, content);
 		    tasks.add(graphTask);
 		    graphTask.fork();
-			
+		    
 		    for(RecursiveAction task : tasks) {
 		    	task.join();
 		    }
@@ -75,13 +69,15 @@ public class HttpRequestTask extends RecursiveAction {
 	}
 	
 	private void parseUrl() {
-		String parsedUrl = sharedContext.getBasicUrl()+"w/api.php?action=parse&page="+this.content.replaceAll("\\s", "_")+"&format=json&section=0&prop=links";
 		try {
+			String parsedUrl = sharedContext.getBasicUrl()+"w/api.php?action=parse&page="+
+					URLEncoder.encode(this.content.replaceAll("\\s", "_"), "UTF-8")+"&format=json&section=0&prop=links";
 			URL myURL = new URL(parsedUrl);
 			this.link = myURL;
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
-			return;
 		}
 	}
 	
@@ -93,7 +89,7 @@ public class HttpRequestTask extends RecursiveAction {
 			connection.setRequestMethod("GET");
 			connection.connect();
 			
-			if(connection.getResponseCode() == 200) {
+			if(connection.getResponseCode() != 429) {
 				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 				String inputLine;
 			    StringBuffer response = new StringBuffer();
@@ -102,6 +98,8 @@ public class HttpRequestTask extends RecursiveAction {
 			    }
 			    reader.close();
 			    jsonObject = new JSONObject(response.toString());
+			} else {
+				return null;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
