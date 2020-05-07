@@ -19,6 +19,8 @@ public class GuiVerticle extends AbstractVerticle {
 	private int nodeIndex = 0;
 	private int edgeIndex = 0;
 	private static final int DEPT = 0;
+	long initialMillis;
+	long finalMillis;
 	
 	@Override
 	public void start(final Future<Void> startFuture) {
@@ -29,24 +31,28 @@ public class GuiVerticle extends AbstractVerticle {
 		view.display();
 		eb.consumer("init", message -> {
 			 String[] f = message.body().toString().split(":");
-			 String word= f[0]; 
+			 LinkedList<String>words = new LinkedList<String>();
+			 words.add(f[0]);
 			 int dept = Integer.parseInt(f[1]);
-			 vertx.deployVerticle(new MyVerticle(DEPT,dept,Arrays.asList(word)));
+			 initialMillis = System.currentTimeMillis();
+			 vertx.deployVerticle(new MyVerticle(DEPT,dept,words));
 		});
 		eb.consumer("updateView", message -> {
-			System.out.println("RECEIVED");
+			//System.out.println("RECEIVED");
 			//view.updateView((List<String>)message.body());
 			DataHolder c = (DataHolder) message.body();
-			List<NodeTuple> newWords = c.getData();
-			System.out.println(newWords.size());
-			for(NodeTuple t : newWords) {
-				System.out.println(t.getValue());
-			}
-			nodes.addAll(newWords);
+			NodeTuple newWords = c.getData();
+
+			nodes.add(newWords);
 			updateView(newWords);
 		});
 		eb.consumer("stop", message -> {
-			vertx.close();
+			finalMillis = System.currentTimeMillis();
+			long diff = finalMillis-initialMillis;
+			System.out.println("STOP, TIME:"+ diff);
+			vertx.deploymentIDs().forEach(vertx::undeploy);
+			view.updateLabel();
+			//vertx.close();
 		});
 	}
 	
@@ -55,8 +61,7 @@ public class GuiVerticle extends AbstractVerticle {
 		System.out.println("MyVerticle stopped!");
 	}
 	
-	private void updateView(final List<NodeTuple> values) {
-		for(NodeTuple node : values) {		
+	private void updateView(final NodeTuple node) {
 			String value = node.getValue();
 			String father = node.getFather();
 			synchronized (graph) {
@@ -64,14 +69,13 @@ public class GuiVerticle extends AbstractVerticle {
 					if(!nodeExists(value)) {
 						graph.addNode(value);
 						graph.getNode(value).addAttribute("ui.label", graph.getNode(value).getId());
-						System.out.println("NNOODDII: "+graph.getNodeCount());
+						//System.out.println("NNOODDII: "+graph.getNodeCount());
 						graph.addEdge(father+value,father,value);		
 					}else {	
 						graph.addEdge(father+value,father,value);
 					}
 				} catch(Exception e) {}
 			}
-		}
 	}
 	
 	private boolean nodeExists (String title) {

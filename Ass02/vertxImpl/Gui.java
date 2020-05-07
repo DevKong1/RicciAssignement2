@@ -195,7 +195,9 @@ public class Gui extends JFrame {
 	    return false;  
 	  }  
 	}
-	
+	public void updateLabel() {
+		this.nodeCounts.setText(String.valueOf(graph.getNodeCount())); 
+	}
 	private boolean isURL(String url) {
 	  try {
 	     (new URL(url)).openStream().close();
