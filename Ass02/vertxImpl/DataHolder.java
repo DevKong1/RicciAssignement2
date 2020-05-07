@@ -4,7 +4,7 @@ import java.util.List;
 
 
 final class DataHolder {
-    private final List<NodeTuple> data;
+    private final NodeTuple data;
     @Override
     public String toString() {
         return "Holder{" +
@@ -12,11 +12,11 @@ final class DataHolder {
                 '}';
     }
 
-    public DataHolder(final List<NodeTuple> data) {
+    public DataHolder(final NodeTuple data) {
         this.data = data;
     }
 
-    public List<NodeTuple> getData() {
+    public NodeTuple getData() {
         return data;
     }
 }
